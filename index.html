@@ -28,6 +28,43 @@
             text-align: center;
         }
 
+        #scoreboard {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(42, 59, 90, 0.9);
+            border-radius: 10px;
+            color: #e6e6e6;
+            gap: 20px;
+        }
+
+        .score-team {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .score-team.blue-team {
+            background: linear-gradient(135deg, #5bc0de, #357d93);
+        }
+
+        .score-team.red-team {
+            background: linear-gradient(135deg, #d9534f, #b02e2a);
+        }
+
+        .score-team h3 {
+            font-size: clamp(14px, 2.5vmin, 18px);
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .score-team span {
+            font-size: clamp(18px, 3.5vmin, 24px);
+            font-weight: bold;
+        }
+
         #turn-indicator {
             color: #e6e6e6;
             font-size: clamp(16px, 3vmin, 24px);
@@ -46,6 +83,14 @@
             max-width: 500px;
         }
 
+        .blue-text {
+            color: #5bc0de;
+        }
+
+        .red-text {
+            color: #d9534f;
+        }
+        
         .square {
             aspect-ratio: 1;
             display: flex;
@@ -139,34 +184,198 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.3s;
+            margin: 5px;
         }
 
         #game-over button:hover {
             background: #b02e2a;
         }
 
+        .buttons-container {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .action-button {
+            padding: 10px 20px;
+            font-size: clamp(14px, 2.5vmin, 16px);
+            color: #e6e6e6;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #give-up-button {
+            background: #f39c12;
+        }
+
+        #give-up-button:hover {
+            background: #e67e22;
+        }
+
+        #reset-button {
+            background: #3498db;
+        }
+
+        #reset-button:hover {
+            background: #2980b9;
+        }
+
+        #confirm-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(42, 59, 90, 0.95);
+            color: #e6e6e6;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            max-width: 80%;
+            z-index: 1000;
+        }
+
+        #confirm-modal p {
+            font-size: clamp(16px, 3vmin, 20px);
+            margin-bottom: 20px;
+        }
+
+        #confirm-modal .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        #confirm-modal button {
+            padding: 10px 20px;
+            font-size: clamp(14px, 2.5vmin, 16px);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #confirm-yes {
+            background: #d9534f;
+            color: #e6e6e6;
+        }
+
+        #confirm-yes:hover {
+            background: #b02e2a;
+        }
+
+        #confirm-no {
+            background: #5bc0de;
+            color: #e6e6e6;
+        }
+
+        #confirm-no:hover {
+            background: #357d93;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        #dev-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .dev-mode {
+            outline: 2px solid #ff00ff;
+        }
+
         @media (max-width: 600px) {
             .game-container {
                 padding: 10px;
+            }
+            #scoreboard {
+                flex-direction: column;
+                padding: 10px;
+            }
+            .buttons-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            #confirm-modal {
+                padding: 15px;
+            }
+            #confirm-modal .modal-buttons {
+                flex-direction: column;
+                gap: 10px;
             }
         }
     </style>
 </head>
 <body>
     <div class="game-container">
+        <div id="scoreboard">
+            <div class="score-team blue-team">
+                <h3>Time Azul</h3>
+                <span id="blue-score">0</span>
+            </div>
+            <div class="score-team red-team">
+                <h3>Time Vermelho</h3>
+                <span id="red-score">0</span>
+            </div>
+        </div>
         <div id="turn-indicator">Vez do Jogador 1 (Azul)</div>
         <div id="board" class="board"></div>
+        <div class="buttons-container">
+            <button id="give-up-button" class="action-button" onclick="showConfirmModal('giveUp')">Desistir</button>
+            <button id="reset-button" class="action-button" onclick="showConfirmModal('reset')">Reiniciar Tudo</button>
+        </div>
     </div>
     <div id="game-over">
         <h2 id="winner-message"></h2>
         <button onclick="restartGame()">Reiniciar</button>
     </div>
+    <div id="overlay"></div>
+    <div id="confirm-modal">
+        <p id="confirm-message"></p>
+        <div class="modal-buttons">
+            <button id="confirm-yes">Sim</button>
+            <button id="confirm-no">Não</button>
+        </div>
+    </div>
+    <button id="dev-button" title="Modo Desenvolvedor"></button>
 
     <script>
         const board = document.getElementById('board');
         const turnIndicator = document.getElementById('turn-indicator');
+        const blueScoreElement = document.getElementById('blue-score');
+        const redScoreElement = document.getElementById('red-score');
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmMessage = document.getElementById('confirm-message');
+        const confirmYes = document.getElementById('confirm-yes');
+        const confirmNo = document.getElementById('confirm-no');
+        const overlay = document.getElementById('overlay');
+        const devButton = document.getElementById('dev-button');
         let selectedPiece = null;
         let turn = 'blue';
+        let blueWins = 0;
+        let redWins = 0;
+        let currentAction = null;
+        let devMode = false;
 
         function createBoard() {
             board.innerHTML = '';
@@ -190,14 +399,27 @@
 
                 square.dataset.index = i;
                 square.addEventListener('click', handleClick);
+                square.addEventListener('contextmenu', handleRightClick);
                 board.appendChild(square);
             }
             updateTurnIndicator();
         }
 
+        devButton.addEventListener('click', () => {
+            devMode = !devMode;
+            board.classList.toggle('dev-mode');
+            console.log('Modo desenvolvedor:', devMode ? 'Ativado' : 'Desativado');
+        });
+
         function handleClick(event) {
             const square = event.currentTarget;
             const piece = square.querySelector('.piece');
+
+            if (devMode && piece) {
+                square.removeChild(piece);
+                checkGameOver();
+                return;
+            }
 
             if (piece && piece.classList.contains(turn)) {
                 if (selectedPiece) {
@@ -214,6 +436,18 @@
             }
         }
 
+        function handleRightClick(event) {
+            event.preventDefault();
+            if (!devMode) return;
+
+            const square = event.currentTarget;
+            const piece = square.querySelector('.piece');
+            
+            if (piece) {
+                piece.classList.toggle('king');
+            }
+        }
+
         function showPossibleMoves(fromSquare) {
             const fromIndex = parseInt(fromSquare.dataset.index);
             const fromRow = Math.floor(fromIndex / 8);
@@ -221,41 +455,106 @@
             const isKing = selectedPiece.classList.contains('king');
             const isRed = selectedPiece.classList.contains('red');
 
-            // Todas as direções possíveis
             const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
 
             directions.forEach(([rowDir, colDir]) => {
-                // Movimento simples (1 casa)
-                const simpleRow = fromRow + rowDir;
-                const simpleCol = fromCol + colDir;
-                const simpleIndex = simpleRow * 8 + simpleCol;
-                const simpleSquare = document.querySelector(`[data-index="${simpleIndex}"]`);
-                if (simpleSquare && isValidMove(simpleSquare)) {
-                    simpleSquare.classList.add('possible-move');
-                }
+                if (!isKing) {
+                    const simpleRow = fromRow + rowDir;
+                    const simpleCol = fromCol + colDir;
+                    const simpleIndex = simpleRow * 8 + simpleCol;
+                    const simpleSquare = document.querySelector(`[data-index="${simpleIndex}"]`);
+                    if (simpleSquare && isValidMove(simpleSquare)) {
+                        simpleSquare.classList.add('possible-move');
+                    }
 
-                // Captura (2 casas)
-                const captureRow = fromRow + 2 * rowDir;
-                const captureCol = fromCol + 2 * colDir;
-                const captureIndex = captureRow * 8 + captureCol;
-                const captureSquare = document.querySelector(`[data-index="${captureIndex}"]`);
-                if (captureSquare && isValidMove(captureSquare)) {
-                    captureSquare.classList.add('possible-move');
-                }
-
-                // Movimentos longos para damas
-                if (isKing) {
+                    const captureRow = fromRow + 2 * rowDir;
+                    const captureCol = fromCol + 2 * colDir;
+                    const captureIndex = captureRow * 8 + captureCol;
+                    const captureSquare = document.querySelector(`[data-index="${captureIndex}"]`);
+                    if (captureSquare && isValidMove(captureSquare)) {
+                        captureSquare.classList.add('possible-move');
+                    }
+                } else {
                     let currentRow = fromRow + rowDir;
                     let currentCol = fromCol + colDir;
+                    let enemies = [];
+                    let validLandingSpots = [];
+
                     while (currentRow >= 0 && currentRow < 8 && currentCol >= 0 && currentCol < 8) {
                         const index = currentRow * 8 + currentCol;
                         const square = document.querySelector(`[data-index="${index}"]`);
+                        const piece = square.querySelector('.piece');
+
+                        if (piece) {
+                            if (piece.classList.contains(isRed ? 'blue' : 'red')) {
+                                enemies.push(index);
+                                let nextRow = currentRow + rowDir;
+                                let nextCol = currentCol + colDir;
+                                while (nextRow >= 0 && nextRow < 8 && nextCol >= 0 && nextCol < 8) {
+                                    const nextIndex = nextRow * 8 + nextCol;
+                                    const nextSquare = document.querySelector(`[data-index="${nextIndex}"]`);
+                                    if (!nextSquare.querySelector('.piece')) {
+                                        validLandingSpots.push(nextSquare);
+                                    } else {
+                                        break;
+                                    }
+                                    nextRow += rowDir;
+                                    nextCol += colDir;
+                                }
+                                break;
+                            } else {
+                                break;
+                            }
+                        } else {
+                            if (isValidMove(square)) {
+                                square.classList.add('possible-move');
+                            }
+                        }
+
+                        currentRow += rowDir;
+                        currentCol += colDir;
+                    }
+
+                    validLandingSpots.forEach(square => {
                         if (isValidMove(square)) {
                             square.classList.add('possible-move');
                         }
-                        if (square.querySelector('.piece')) break;
-                        currentRow += rowDir;
-                        currentCol += colDir;
+                    });
+
+                    if (enemies.length > 0) {
+                        const firstEnemyRow = Math.floor(enemies[0] / 8);
+                        const firstEnemyCol = enemies[0] % 8;
+                        let nextRow = firstEnemyRow + rowDir;
+                        let nextCol = firstEnemyCol + colDir;
+
+                        while (nextRow >= 0 && nextRow < 8 && nextCol >= 0 && nextCol < 8) {
+                            const nextIndex = nextRow * 8 + nextCol;
+                            const nextSquare = document.querySelector(`[data-index="${nextIndex}"]`);
+                            const nextPiece = nextSquare.querySelector('.piece');
+
+                            if (nextPiece && nextPiece.classList.contains(isRed ? 'blue' : 'red')) {
+                                enemies.push(nextIndex);
+                                let landingRow = nextRow + rowDir;
+                                let landingCol = nextCol + colDir;
+                                while (landingRow >= 0 && landingRow < 8 && landingCol >= 0 && landingCol < 8) {
+                                    const landingIndex = landingRow * 8 + landingCol;
+                                    const landingSquare = document.querySelector(`[data-index="${landingIndex}"]`);
+                                    if (!landingSquare.querySelector('.piece') && isValidMove(landingSquare)) {
+                                        landingSquare.classList.add('possible-move');
+                                    } else {
+                                        break;
+                                    }
+                                    landingRow += rowDir;
+                                    landingCol += colDir;
+                                }
+                                break;
+                            }
+                            if (!nextPiece && isValidMove(nextSquare)) {
+                                nextSquare.classList.add('possible-move');
+                            }
+                            nextRow += rowDir;
+                            nextCol += colDir;
+                        }
                     }
                 }
             });
@@ -410,11 +709,60 @@
 
             if (redPieces === 0 || bluePieces === 0) {
                 const winner = redPieces === 0 ? 'Azul' : 'Vermelho';
-                const gameOverDiv = document.getElementById('game-over');
-                const winnerMessage = document.getElementById('winner-message');
-                winnerMessage.textContent = `Parabéns, Time ${winner}! Você venceu!`;
-                gameOverDiv.style.display = 'block';
+                showGameOver(winner);
             }
+        }
+
+        function showGameOver(winner) {
+            const gameOverDiv = document.getElementById('game-over');
+            const winnerMessage = document.getElementById('winner-message');
+
+            if (winner === 'Azul') {
+                blueWins++;
+                blueScoreElement.textContent = blueWins;
+            } else {
+                redWins++;
+                redScoreElement.textContent = redWins;
+            }
+
+            winnerMessage.textContent = `Parabéns, Time ${winner}! Você venceu!`;
+            gameOverDiv.style.display = 'block';
+        }
+
+        function showConfirmModal(action) {
+            currentAction = action;
+            overlay.style.display = 'block';
+            confirmModal.style.display = 'block';
+
+            if (action === 'giveUp') {
+                const currentPlayer = turn === 'blue' ? 'Jogador 1 (Azul)' : 'Jogador 2 (Vermelho)';
+                const playerColorClass = turn === 'blue' ? 'blue-text' : 'red-text';
+                confirmMessage.innerHTML = `Você tem certeza que deseja desistir, <span class="${playerColorClass}">${currentPlayer}</span>?`;
+            } else if (action === 'reset') {
+                confirmMessage.textContent = 'Você tem certeza que deseja reiniciar o jogo e zerar o placar?';
+            }
+
+            confirmYes.onclick = () => {
+                if (currentAction === 'giveUp') {
+                    const opponent = turn === 'blue' ? 'Vermelho' : 'Azul';
+                    showGameOver(opponent);
+                } else if (currentAction === 'reset') {
+                    blueWins = 0;
+                    redWins = 0;
+                    blueScoreElement.textContent = '0';
+                    redScoreElement.textContent = '0';
+                    restartGame();
+                }
+                hideConfirmModal();
+            };
+
+            confirmNo.onclick = hideConfirmModal;
+        }
+
+        function hideConfirmModal() {
+            overlay.style.display = 'none';
+            confirmModal.style.display = 'none';
+            currentAction = null;
         }
 
         function restartGame() {
