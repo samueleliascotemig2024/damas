@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Damas Elegante</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a2a44, #4a6a8a);
+            font-family: Arial, sans-serif;
+        }
+
+        .game-container {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        #turn-indicator {
+            color: #e6e6e6;
+            font-size: clamp(16px, 3vmin, 24px);
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            background-color: #2a3b5a;
+            padding: 2px;
+            border-radius: 10px;
+            width: 90vmin;
+            max-width: 500px;
+        }
+
+        .square {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .square:active {
+            transform: scale(0.95);
+        }
+
+        .white {
+            background-color: #e6d7a8;
+        }
+
+        .black {
+            background-color: #8a6d3b;
+        }
+
+        .piece {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .piece:active {
+            transform: scale(0.9);
+        }
+
+        .red {
+            background: radial-gradient(circle, #d9534f, #b02e2a);
+        }
+
+        .blue {
+            background: radial-gradient(circle, #5bc0de, #357d93);
+        }
+
+        .king::after {
+            content: '♚';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #f7d794;
+            font-size: clamp(16px, 3vmin, 24px);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .selected {
+            border: 3px solid #f7d794;
+            box-shadow: 0 0 10px #f7d794;
+        }
+
+        .possible-move {
+            background-color: rgba(104, 159, 56, 0.5);
+            border: 2px dashed #689f38;
+        }
+
+        #game-over {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(42, 59, 90, 0.95);
+            color: #e6e6e6;
+            padding: 30px;
+            text-align: center;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+            max-width: 90%;
+        }
+
+        #game-over h2 {
+            margin-bottom: 20px;
+            font-size: clamp(20px, 4vmin, 28px);
+        }
+
+        #game-over button {
+            padding: 12px 24px;
+            font-size: clamp(14px, 3vmin, 18px);
+            background: #d9534f;
+            color: #e6e6e6;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #game-over button:hover {
+            background: #b02e2a;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="turn-indicator">Vez do Jogador 1 (Azul)</div>
+        <div id="board" class="board"></div>
+    </div>
+    <div id="game-over">
+        <h2 id="winner-message"></h2>
+        <button onclick="restartGame()">Reiniciar</button>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        const turnIndicator = document.getElementById('turn-indicator');
+        let selectedPiece = null;
+        let turn = 'blue';
+
+        function createBoard() {
+            board.innerHTML = '';
+            for (let i = 0; i < 64; i++) {
+                const square = document.createElement('div');
+                square.classList.add('square');
+                const isWhite = (Math.floor(i / 8) + i) % 2 === 0;
+                square.classList.add(isWhite ? 'white' : 'black');
+
+                if (!isWhite) {
+                    if (i < 24) {
+                        const piece = document.createElement('div');
+                        piece.classList.add('piece', 'red');
+                        square.appendChild(piece);
+                    } else if (i > 39) {
+                        const piece = document.createElement('div');
+                        piece.classList.add('piece', 'blue');
+                        square.appendChild(piece);
+                    }
+                }
+
+                square.dataset.index = i;
+                square.addEventListener('click', handleClick);
+                board.appendChild(square);
+            }
+            updateTurnIndicator();
+        }
+
+        function handleClick(event) {
+            const square = event.currentTarget;
+            const piece = square.querySelector('.piece');
+
+            if (piece && piece.classList.contains(turn)) {
+                if (selectedPiece) {
+                    selectedPiece.classList.remove('selected');
+                    clearPossibleMoves();
+                }
+                selectedPiece = piece;
+                piece.classList.add('selected');
+                showPossibleMoves(square);
+            } else if (selectedPiece && isValidMove(square)) {
+                movePiece(square);
+                clearPossibleMoves();
+                checkGameOver();
+            }
+        }
+
+        function showPossibleMoves(fromSquare) {
+            const fromIndex = parseInt(fromSquare.dataset.index);
+            const fromRow = Math.floor(fromIndex / 8);
+            const fromCol = fromIndex % 8;
+            const isKing = selectedPiece.classList.contains('king');
+            const isRed = selectedPiece.classList.contains('red');
+
+            // Todas as direções possíveis
+            const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+
+            directions.forEach(([rowDir, colDir]) => {
+                // Movimento simples (1 casa)
+                const simpleRow = fromRow + rowDir;
+                const simpleCol = fromCol + colDir;
+                const simpleIndex = simpleRow * 8 + simpleCol;
+                const simpleSquare = document.querySelector(`[data-index="${simpleIndex}"]`);
+                if (simpleSquare && isValidMove(simpleSquare)) {
+                    simpleSquare.classList.add('possible-move');
+                }
+
+                // Captura (2 casas)
+                const captureRow = fromRow + 2 * rowDir;
+                const captureCol = fromCol + 2 * colDir;
+                const captureIndex = captureRow * 8 + captureCol;
+                const captureSquare = document.querySelector(`[data-index="${captureIndex}"]`);
+                if (captureSquare && isValidMove(captureSquare)) {
+                    captureSquare.classList.add('possible-move');
+                }
+
+                // Movimentos longos para damas
+                if (isKing) {
+                    let currentRow = fromRow + rowDir;
+                    let currentCol = fromCol + colDir;
+                    while (currentRow >= 0 && currentRow < 8 && currentCol >= 0 && currentCol < 8) {
+                        const index = currentRow * 8 + currentCol;
+                        const square = document.querySelector(`[data-index="${index}"]`);
+                        if (isValidMove(square)) {
+                            square.classList.add('possible-move');
+                        }
+                        if (square.querySelector('.piece')) break;
+                        currentRow += rowDir;
+                        currentCol += colDir;
+                    }
+                }
+            });
+        }
+
+        function clearPossibleMoves() {
+            document.querySelectorAll('.possible-move').forEach(square => {
+                square.classList.remove('possible-move');
+            });
+        }
+
+        function isValidMove(targetSquare) {
+            const fromIndex = parseInt(selectedPiece.parentElement.dataset.index);
+            const toIndex = parseInt(targetSquare.dataset.index);
+            const fromRow = Math.floor(fromIndex / 8);
+            const fromCol = fromIndex % 8;
+            const toRow = Math.floor(toIndex / 8);
+            const toCol = toIndex % 8;
+            const isKing = selectedPiece.classList.contains('king');
+            const isRed = selectedPiece.classList.contains('red');
+
+            if (targetSquare.querySelector('.piece')) return false;
+
+            const rowDiff = toRow - fromRow;
+            const colDiff = toCol - fromCol;
+            if (Math.abs(rowDiff) !== Math.abs(colDiff)) return false;
+
+            const directionRow = rowDiff > 0 ? 1 : -1;
+            const directionCol = colDiff > 0 ? 1 : -1;
+
+            if (!isKing) {
+                if (Math.abs(rowDiff) === 1 && !hasEnemiesInPath(fromIndex, toIndex, directionRow, directionCol)) {
+                    return (isRed && rowDiff > 0) || (!isRed && rowDiff < 0);
+                }
+                return checkMultipleCaptures(fromIndex, toIndex, directionRow, directionCol, isRed, false);
+            }
+
+            return checkMultipleCaptures(fromIndex, toIndex, directionRow, directionCol, isRed, true) ||
+                   (!hasEnemiesInPath(fromIndex, toIndex, directionRow, directionCol));
+        }
+
+        function hasEnemiesInPath(fromIndex, toIndex, directionRow, directionCol) {
+            let currentRow = Math.floor(fromIndex / 8) + directionRow;
+            let currentCol = fromIndex % 8 + directionCol;
+            const toRow = Math.floor(toIndex / 8);
+            const toCol = toIndex % 8;
+
+            while ((directionRow > 0 ? currentRow <= toRow : currentRow >= toRow) &&
+                   (directionCol > 0 ? currentCol <= toCol : currentCol >= toCol)) {
+                const index = currentRow * 8 + currentCol;
+                const square = document.querySelector(`[data-index="${index}"]`);
+                if (square.querySelector('.piece')) return true;
+                if (index === toIndex) break;
+                currentRow += directionRow;
+                currentCol += directionCol;
+            }
+            return false;
+        }
+
+        function checkMultipleCaptures(fromIndex, toIndex, directionRow, directionCol, isRed, isKing) {
+            let currentRow = Math.floor(fromIndex / 8) + directionRow;
+            let currentCol = fromIndex % 8 + directionCol;
+            const toRow = Math.floor(toIndex / 8);
+            const toCol = toIndex % 8;
+            let enemies = [];
+
+            while ((directionRow > 0 ? currentRow <= toRow : currentRow >= toRow) &&
+                   (directionCol > 0 ? currentCol <= toCol : currentCol >= toCol)) {
+                const index = currentRow * 8 + currentCol;
+                const square = document.querySelector(`[data-index="${index}"]`);
+                const piece = square.querySelector('.piece');
+
+                if (piece) {
+                    if (piece.classList.contains(isRed ? 'blue' : 'red')) {
+                        enemies.push(index);
+                    } else {
+                        return false;
+                    }
+                }
+
+                if (index === toIndex) break;
+                currentRow += directionRow;
+                currentCol += directionCol;
+            }
+
+            if (enemies.length === 0) return false;
+
+            if (!isKing) {
+                return enemies.length === Math.abs(toRow - Math.floor(fromIndex / 8)) / 2;
+            }
+
+            return enemies.length > 0;
+        }
+
+        function movePiece(targetSquare) {
+            const fromIndex = parseInt(selectedPiece.parentElement.dataset.index);
+            const toIndex = parseInt(targetSquare.dataset.index);
+            const fromRow = Math.floor(fromIndex / 8);
+            const fromCol = fromIndex % 8;
+            const toRow = Math.floor(toIndex / 8);
+            const toCol = toIndex % 8;
+            const isRed = selectedPiece.classList.contains('red');
+
+            const rowDiff = toRow - fromRow;
+            const colDiff = toCol - fromCol;
+            const directionRow = rowDiff > 0 ? 1 : -1;
+            const directionCol = colDiff > 0 ? 1 : -1;
+            let currentRow = fromRow + directionRow;
+            let currentCol = fromCol + directionCol;
+
+            while ((directionRow > 0 ? currentRow <= toRow : currentRow >= toRow) &&
+                   (directionCol > 0 ? currentCol <= toCol : currentCol >= toCol)) {
+                const index = currentRow * 8 + currentCol;
+                const square = document.querySelector(`[data-index="${index}"]`);
+                const piece = square.querySelector('.piece');
+
+                if (piece && piece.classList.contains(isRed ? 'blue' : 'red')) {
+                    square.removeChild(piece);
+                }
+
+                if (index === toIndex) break;
+                currentRow += directionRow;
+                currentCol += directionCol;
+            }
+
+            targetSquare.appendChild(selectedPiece);
+            selectedPiece.classList.remove('selected');
+
+            const targetRow = Math.floor(toIndex / 8);
+            if ((isRed && targetRow === 7) || (!isRed && targetRow === 0)) {
+                selectedPiece.classList.add('king');
+            }
+
+            selectedPiece = null;
+            turn = turn === 'red' ? 'blue' : 'red';
+            updateTurnIndicator();
+        }
+
+        function updateTurnIndicator() {
+            if (turn === 'blue') {
+                turnIndicator.textContent = 'Vez do Jogador 1 (Azul)';
+                turnIndicator.style.color = '#5bc0de';
+            } else {
+                turnIndicator.textContent = 'Vez do Jogador 2 (Vermelho)';
+                turnIndicator.style.color = '#d9534f';
+            }
+        }
+
+        function checkGameOver() {
+            const redPieces = document.querySelectorAll('.piece.red').length;
+            const bluePieces = document.querySelectorAll('.piece.blue').length;
+
+            if (redPieces === 0 || bluePieces === 0) {
+                const winner = redPieces === 0 ? 'Azul' : 'Vermelho';
+                const gameOverDiv = document.getElementById('game-over');
+                const winnerMessage = document.getElementById('winner-message');
+                winnerMessage.textContent = `Parabéns, Time ${winner}! Você venceu!`;
+                gameOverDiv.style.display = 'block';
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('game-over').style.display = 'none';
+            selectedPiece = null;
+            turn = 'blue';
+            createBoard();
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
